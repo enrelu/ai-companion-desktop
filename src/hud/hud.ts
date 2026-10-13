@@ -34,9 +34,7 @@ async function init() {
 
   // Escuchar evento de invocación desde Rust
   await listen<{ text: string }>('trigger-hud', (event) => {
-    if (event.payload && event.payload.text) {
-      handleNewText(event.payload.text);
-    }
+    handleNewText(event.payload?.text || "");
   });
 
   // Eventos de tabs
@@ -130,8 +128,9 @@ function handleNewText(text: string) {
 }
 
 async function executeCurrentAction() {
-  if (!sourceText) {
-    hudContent.innerHTML = `<div class="hud-loading">No se detectó texto seleccionado.</div>`;
+  if (!sourceText || !sourceText.trim()) {
+    hudContent.innerHTML = `<div class="hud-loading" style="font-style:normal; color:#a5b4fc; text-align:center;">💡 Selecciona texto en cualquier ventana y pulsa <strong>Alt+T</strong>.<br><span style="font-size:11.5px; color:#9ca3af; margin-top:6px; display:inline-block;">O copia texto y pulsa <strong>Alt+Shift+V</strong> para el historial.</span></div>`;
+    statusIndicator.textContent = "Esperando selección";
     return;
   }
 

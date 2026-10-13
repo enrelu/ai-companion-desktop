@@ -1,5 +1,8 @@
 // Win32 Native Helpers for Windows (Cursor pos, input simulation, active window)
 
+use std::thread;
+use std::time::Duration;
+
 #[repr(C)]
 #[derive(Default, Copy, Clone, Debug)]
 pub struct POINT {
@@ -15,7 +18,9 @@ extern "system" {
     fn SetForegroundWindow(hWnd: isize) -> i32;
 }
 
+const VK_SHIFT: u8 = 0x10;
 const VK_CONTROL: u8 = 0x11;
+const VK_MENU: u8 = 0x12; // Alt key
 const VK_C: u8 = 0x43;
 const VK_V: u8 = 0x56;
 const KEYEVENTF_KEYUP: u32 = 0x0002;
@@ -40,6 +45,12 @@ pub fn restore_active_window(hwnd: isize) {
 
 pub fn trigger_ctrl_c() {
     unsafe {
+        // Liberar Alt y Shift para que Windows no interprete Alt+Ctrl+C
+        keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+        keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+
+        thread::sleep(Duration::from_millis(30));
+
         keybd_event(VK_CONTROL, 0, 0, 0);
         keybd_event(VK_C, 0, 0, 0);
         keybd_event(VK_C, 0, KEYEVENTF_KEYUP, 0);
@@ -49,6 +60,11 @@ pub fn trigger_ctrl_c() {
 
 pub fn trigger_ctrl_v() {
     unsafe {
+        keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+        keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+
+        thread::sleep(Duration::from_millis(30));
+
         keybd_event(VK_CONTROL, 0, 0, 0);
         keybd_event(VK_V, 0, 0, 0);
         keybd_event(VK_V, 0, KEYEVENTF_KEYUP, 0);
