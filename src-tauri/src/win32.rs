@@ -1,4 +1,4 @@
-// Win32 Native Helpers for Windows (Cursor pos, input simulation, active window)
+// Win32 Native Helpers for Windows (Cursor pos, input simulation, active window, clipboard sequence)
 
 use std::thread;
 use std::time::Duration;
@@ -16,6 +16,7 @@ extern "system" {
     fn keybd_event(bVk: u8, bScan: u8, dwFlags: u32, dwExtraInfo: usize);
     fn GetForegroundWindow() -> isize;
     fn SetForegroundWindow(hWnd: isize) -> i32;
+    fn GetClipboardSequenceNumber() -> u32;
 }
 
 const VK_SHIFT: u8 = 0x10;
@@ -43,31 +44,50 @@ pub fn restore_active_window(hwnd: isize) {
     }
 }
 
+pub fn get_clipboard_sequence() -> u32 {
+    unsafe { GetClipboardSequenceNumber() }
+}
+
 pub fn trigger_ctrl_c() {
     unsafe {
-        // Liberar Alt y Shift para que Windows no interprete Alt+Ctrl+C
+        // 1. Presionar Control primero para evitar que Windows abra el menú de la barra de título con Alt
+        keybd_event(VK_CONTROL, 0, 0, 0);
+        thread::sleep(Duration::from_millis(15));
+
+        // 2. Liberar Alt y Shift mientras Control sigue presionado
         keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
         keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+        thread::sleep(Duration::from_millis(20));
 
-        thread::sleep(Duration::from_millis(30));
-
-        keybd_event(VK_CONTROL, 0, 0, 0);
+        // 3. Pulsar y soltar C (Ctrl + C)
         keybd_event(VK_C, 0, 0, 0);
+        thread::sleep(Duration::from_millis(20));
         keybd_event(VK_C, 0, KEYEVENTF_KEYUP, 0);
+        thread::sleep(Duration::from_millis(15));
+
+        // 4. Liberar Control
         keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
     }
 }
 
 pub fn trigger_ctrl_v() {
     unsafe {
+        // 1. Presionar Control primero
+        keybd_event(VK_CONTROL, 0, 0, 0);
+        thread::sleep(Duration::from_millis(15));
+
+        // 2. Liberar Alt y Shift mientras Control sigue presionado
         keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
         keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+        thread::sleep(Duration::from_millis(20));
 
-        thread::sleep(Duration::from_millis(30));
-
-        keybd_event(VK_CONTROL, 0, 0, 0);
+        // 3. Pulsar y soltar V (Ctrl + V)
         keybd_event(VK_V, 0, 0, 0);
+        thread::sleep(Duration::from_millis(20));
         keybd_event(VK_V, 0, KEYEVENTF_KEYUP, 0);
+        thread::sleep(Duration::from_millis(15));
+
+        // 4. Liberar Control
         keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
     }
 }

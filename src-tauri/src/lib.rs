@@ -72,27 +72,45 @@ fn trigger_hud_flow(app: &tauri::AppHandle) {
         let active_hwnd = win32::get_active_window();
         LAST_ACTIVE_HWND.store(active_hwnd, Ordering::SeqCst);
 
-        // 2. Simular Ctrl+C en la ventana activa
+        // 2. Obtener el número de secuencia antes de copiar
+        let initial_seq = win32::get_clipboard_sequence();
+
+        // 3. Simular Ctrl+C en la ventana activa
         win32::trigger_ctrl_c();
-        thread::sleep(Duration::from_millis(100));
 
-        // 3. Leer el texto capturado del portapapeles
-        let captured_text = app_handle
-            .clipboard()
-            .read_text()
-            .unwrap_or_default();
+        // 4. Esperar hasta 240ms comprobando si el portapapeles cambió de secuencia (copia efectiva)
+        let mut new_copy_detected = false;
+        for _ in 0..12 {
+            thread::sleep(Duration::from_millis(20));
+            if win32::get_clipboard_sequence() != initial_seq {
+                new_copy_detected = true;
+                break;
+            }
+        }
 
-        // 4. Obtener la posición del ratón
+        // 5. Si el portapapeles CAMBIÓ, leer el nuevo texto seleccionado.
+        // Si NO cambió (porque no había texto seleccionado o la app no permitió copiar),
+        // ¡NO leer el portapapeles antiguo! Usar cadena vacía.
+        let captured_text = if new_copy_detected {
+            app_handle
+                .clipboard()
+                .read_text()
+                .unwrap_or_default()
+        } else {
+            String::new()
+        };
+
+        // 6. Obtener la posición del ratón
         let (mouse_x, mouse_y) = win32::get_mouse_position();
 
-        // 5. Posicionar y mostrar la ventana flotante HUD
+        // 7. Posicionar y mostrar la ventana flotante HUD
         if let Some(hud_window) = app_handle.get_webview_window("hud") {
             let _ = hud_window.set_position(PhysicalPosition::new(mouse_x + 10, mouse_y + 10));
             let _ = hud_window.unminimize();
             let _ = hud_window.show();
             let _ = hud_window.set_focus();
 
-            // 6. Emitir evento con el texto para que la UI de TS lo procese
+            // 8. Emitir evento con el texto para que la UI de TS lo procese
             let _ = hud_window.emit(
                 "trigger-hud",
                 serde_json::json!({
@@ -130,9 +148,11 @@ fn toggle_hub_window(app: &tauri::AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let alt_t = Shortcut::new(Some(Modifiers::ALT), Code::KeyT);
+    let alt_v = Shortcut::new(Some(Modifiers::ALT), Code::KeyV);
     let alt_shift_v = Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::KeyV);
 
     let alt_t_clone = alt_t.clone();
+    let alt_v_clone = alt_v.clone();
     let alt_shift_v_clone = alt_shift_v.clone();
 
     tauri::Builder::default()
@@ -142,11 +162,11 @@ pub fn run() {
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, shortcut, event| {
                     if event.state() == ShortcutState::Pressed {
-                        if shortcut == &alt_t_clone {
-                            println!("[HotKey] Alt+T activado");
+                        if shortcut == &alt_t_clone || shortcut == &alt_v_clone {
+                            println!("[HotKey] Asistente flotante activado");
                             trigger_hud_flow(app);
                         } else if shortcut == &alt_shift_v_clone {
-                            println!("[HotKey] Alt+Shift+V activado");
+                            println!("[HotKey] Historial del Portapapeles activado");
                             toggle_hub_window(app);
                         }
                     }
@@ -176,7 +196,7 @@ pub fn run() {
         })
         .setup(move |app| {
             // 1. Configurar System Tray
-            let open_hud_i = MenuItem::with_id(app, "open_hud", "⚡ Asistente Flotante (Alt+T)", true, None::<&str>)?;
+            let open_hud_i = MenuItem::with_id(app, "open_hud", "⚡ Asistente Flotante (Alt+T o Alt+V)", true, None::<&str>)?;
             let open_hub_i = MenuItem::with_id(app, "open_hub", "📋 Historial y Ajustes (Alt+Shift+V)", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "Salir", true, None::<&str>)?;
 
@@ -199,16 +219,11 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // 2. Registrar atajos globales por defecto
+            // 2. Registrar atajos globales por defecto (Alt+T, Alt+V y Alt+Shift+V)
             let global_shortcut = app.global_shortcut();
-            match global_shortcut.register(alt_t) {
-                Ok(_) => println!("✅ Atajo Alt+T registrado con éxito"),
-                Err(e) => eprintln!("❌ Error registrando Alt+T: {:?}", e),
-            }
-            match global_shortcut.register(alt_shift_v) {
-                Ok(_) => println!("✅ Atajo Alt+Shift+V registrado con éxito"),
-                Err(e) => eprintln!("❌ Error registrando Alt+Shift+V: {:?}", e),
-            }
+            let _ = global_shortcut.register(alt_t);
+            let _ = global_shortcut.register(alt_v);
+            let _ = global_shortcut.register(alt_shift_v);
 
             // 3. Monitor ligero en segundo plano para el historial de portapapeles (20 slots)
             let app_for_clip = app.handle().clone();
