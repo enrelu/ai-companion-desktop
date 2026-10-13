@@ -42,10 +42,10 @@ Accesible mediante atajo global o desde el icono en la barra de tareas (**System
 
 | Atajo | Acción |
 | :--- | :--- |
-| `Alt + T` | Abrir Asistente Flotante con el texto seleccionado |
+| `Alt + T` o `Alt + V` | Abrir Asistente Flotante con el texto seleccionado |
 | `Alt + Shift + V` | Abrir / Ocultar Historial del Portapapeles y Ajustes |
-| `1`, `2`, `3`, `4` | Copiar Pin rápido 1, 2, 3 o 4 (en la ventana Hub) |
-| `Escape` | Cerrar la ventana flotante |
+| `Alt + 1`, `Alt + 2`, `Alt + 3`, `Alt + 4` | **Pegar directamente el Pin 1, 2, 3 o 4 en cualquier aplicación activa** |
+| `Escape` o clic fuera | Cerrar la ventana flotante |
 
 ---
 
