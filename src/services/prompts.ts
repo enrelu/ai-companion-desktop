@@ -50,35 +50,49 @@ Text to translate:
 "${cleanText}"`;
   },
 
-  // 2. Pulidor de Inglés Nativo (Make it Sound Native / Anti-Spanglish)
+  // 2. Pulidor Nativo (Make it Sound Native en Español o Inglés según el origen)
   makeNative: (text: string) => {
-    return `System: You are an expert native English copyeditor.
-Task: The user has drafted text in English, but it might sound awkward, overly formal, or translated literally from Spanish ("Spanglish").
-Rewrite the text so it sounds completely natural, idiomatic, and fluent, as written by an articulate native speaker.
+    const clean = text.trim();
+    return `System: You are a professional native copyeditor and bilingual stylistic expert.
+Task: Analyze the input text and detect its language:
+- If the text is in Spanish: Polish, refine, and elevate it so it sounds 100% natural, fluent, and idiomatic in Spanish (Español nativo culto y fluido, eliminando calcos del inglés, giros forzados, redundancias o expresiones artificiales).
+- If the text is in English: Polish and refine it so it sounds 100% natural, idiomatic, and fluent as written by an articulate native English speaker (eliminating Spanglish, unnatural literal phrasing, or awkward grammar).
+- If in another language: Polish and elevate it in that same language to sound native.
+
 Constraints:
-- Preserve the original meaning and core intent.
-- Do NOT alter technical terms or proper nouns.
-- Output ONLY the polished English text.
+- Preserve the original meaning, tone, and core intent.
+- Do NOT translate to another language; polish strictly in the SAME source language.
+- Do NOT alter code symbols, technical terms, or proper nouns.
+- Output ONLY the polished text. No greetings, quotes, or conversational explanations.
 
 Draft to polish:
-"${text.trim()}"`;
+"${clean}"`;
   },
 
-  // 3. Smart Reply (3 borradores de respuesta rápida listos para usar)
+  // 3. Smart Reply (3 borradores de respuesta rápida en el mismo idioma del mensaje)
   smartReply: (text: string) => {
-    return `System: You are an executive communication assistant.
-Task: Analyze the incoming message and propose 3 distinct, ready-to-send concise response drafts in English (suitable for email, Slack, or Teams):
-1. Positive / Agreement / Acknowledgment
-2. Request for more details / Follow-up inquiry
-3. Polite decline / Alternative suggestion
+    const clean = text.trim();
+    return `System: You are an executive communication assistant and response strategist.
+Task: Analyze the incoming message and detect its language.
+Generate 3 distinct, ready-to-send concise response drafts (suitable for email, Slack, WhatsApp, or Teams) IN THE EXACT SAME LANGUAGE as the incoming message:
+- If the incoming message is in Spanish -> Generate all 3 replies in natural Spanish.
+- If the incoming message is in English -> Generate all 3 replies in natural English.
+- If in another language -> Generate all 3 replies in that language.
+
+The 3 reply options must cover:
+1. Positive / Agreement / Confirmation (Acuerdo / Confirmación / Agradecimiento)
+2. Request for more details / Follow-up inquiry (Pregunta aclaratoria / Solicitud de más información)
+3. Polite decline / Alternative proposal (Declinar amablemente / Proponer alternativa)
 
 Format strictly as:
 Option 1: [Text for option 1]
 Option 2: [Text for option 2]
 Option 3: [Text for option 3]
 
+Rule: Output ONLY the 3 options in this exact format. No intro, notes, or extra commentary.
+
 Incoming message:
-"${text.trim()}"`;
+"${clean}"`;
   },
 
   // 4. Diagnóstico de Errores de Código y Logs

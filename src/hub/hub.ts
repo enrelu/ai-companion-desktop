@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
+import { listen, emit } from '@tauri-apps/api/event';
 import { enable as enableAutostart, isEnabled as isAutostartEnabled, disable as disableAutostart } from '@tauri-apps/plugin-autostart';
 import { ConfigService, HistoryItem, PinnedItem } from '../services/config';
 import { TextTransformers } from '../services/transformers';
@@ -14,9 +14,11 @@ const searchInput = document.getElementById('searchInput') as HTMLInputElement;
 const pinnedContainer = document.getElementById('pinnedContainer') as HTMLDivElement;
 const historyContainer = document.getElementById('historyContainer') as HTMLDivElement;
 const clearHistoryBtn = document.getElementById('clearHistoryBtn') as HTMLButtonElement;
+const themeToggleBtn = document.getElementById('themeToggleBtn') as HTMLButtonElement;
 
 const apiKeyInput = document.getElementById('apiKeyInput') as HTMLInputElement;
 const modelSelect = document.getElementById('modelSelect') as HTMLSelectElement;
+const themeSelect = document.getElementById('themeSelect') as HTMLSelectElement;
 const toneSelect = document.getElementById('toneSelect') as HTMLSelectElement;
 const autoReplaceCheck = document.getElementById('autoReplaceCheck') as HTMLInputElement;
 const presentationModeCheck = document.getElementById('presentationModeCheck') as HTMLInputElement;
@@ -31,6 +33,38 @@ let fullHistory: HistoryItem[] = [];
 async function init() {
   await loadSettings();
   await loadHistoryAndPins();
+
+  const cfg = await ConfigService.getConfig();
+  const initialTheme = ConfigService.applyTheme(cfg.theme);
+  updateThemeIcon(initialTheme);
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', async () => {
+      const currentResolved = document.documentElement.getAttribute('data-theme') || 'dark';
+      const newTheme = currentResolved === 'dark' ? 'light' : 'dark';
+      await ConfigService.updateConfig({ theme: newTheme });
+      themeSelect.value = newTheme;
+      ConfigService.applyTheme(newTheme);
+      updateThemeIcon(newTheme);
+      await emit('theme-changed', { theme: newTheme });
+    });
+  }
+
+  themeSelect.addEventListener('change', async () => {
+    const selected = themeSelect.value as 'dark' | 'light' | 'system';
+    await ConfigService.updateConfig({ theme: selected });
+    const applied = ConfigService.applyTheme(selected);
+    updateThemeIcon(applied);
+    await emit('theme-changed', { theme: selected });
+  });
+
+  await listen<{ theme: 'dark' | 'light' | 'system' }>('theme-changed', (event) => {
+    if (event.payload?.theme) {
+      themeSelect.value = event.payload.theme;
+      const applied = ConfigService.applyTheme(event.payload.theme);
+      updateThemeIcon(applied);
+    }
+  });
 
   // Cambio de pestañas
   navBtns.forEach(btn => {
@@ -90,6 +124,7 @@ async function loadSettings() {
   const config = await ConfigService.getConfig();
   apiKeyInput.value = config.geminiApiKey;
   modelSelect.value = config.geminiModel;
+  themeSelect.value = config.theme;
   toneSelect.value = config.geminiTone;
   autoReplaceCheck.checked = config.autoReplace;
   presentationModeCheck.checked = config.presentationMode;
@@ -105,10 +140,15 @@ async function saveSettings() {
   await ConfigService.updateConfig({
     geminiApiKey: apiKeyInput.value.trim(),
     geminiModel: modelSelect.value,
+    theme: themeSelect.value as any,
     geminiTone: toneSelect.value as any,
     autoReplace: autoReplaceCheck.checked,
     presentationMode: presentationModeCheck.checked
   });
+
+  const applied = ConfigService.applyTheme(themeSelect.value as any);
+  updateThemeIcon(applied);
+  await emit('theme-changed', { theme: themeSelect.value });
 
   try {
     if (autostartCheck.checked) {
@@ -287,6 +327,13 @@ function escapeHtml(str: string): string {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+function updateThemeIcon(theme: 'dark' | 'light') {
+  if (themeToggleBtn) {
+    themeToggleBtn.textContent = theme === 'dark' ? '🌙' : '☀️';
+    themeToggleBtn.title = theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+  }
 }
 
 init();

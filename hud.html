@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,19 +7,22 @@
   <link rel="stylesheet" href="./src/hud/hud.css">
 </head>
 <body>
-  <div class="glass-panel hud-container fade-in" id="hudWindow">
+  <div class="hud-container fade-in" id="hudWindow">
     <!-- Header -->
     <div class="hud-header">
-      <div class="hud-title-badge">⚡ AI Companion</div>
+      <div class="hud-title-badge">⚡ AI</div>
       <div class="hud-tabs" id="hudTabs">
-        <button class="hud-tab-btn active" data-action="translate">🌐 Traducir</button>
-        <button class="hud-tab-btn" data-action="makeNative">🇬🇧 Make Native</button>
-        <button class="hud-tab-btn" data-action="smartReply">💬 Smart Reply</button>
-        <button class="hud-tab-btn" data-action="code">🐞 Código/Error</button>
-        <button class="hud-tab-btn" data-action="summarize">📝 TL;DR</button>
-        <button class="hud-tab-btn" data-action="proofread">✍️ Corrector</button>
+        <button class="hud-tab-btn active" data-action="translate" title="Traducir texto con tono">🌐 Traducir</button>
+        <button class="hud-tab-btn" data-action="makeNative" title="Hacer sonar nativo y pulir">✨ Make Native</button>
+        <button class="hud-tab-btn" data-action="smartReply" title="Generar 3 borradores de respuesta">💬 Respuestas</button>
+        <button class="hud-tab-btn" data-action="code" title="Diagnosticar error de código o log">🐞 Código</button>
+        <button class="hud-tab-btn" data-action="summarize" title="Resumen ejecutivo en 3 viñetas">📝 TL;DR</button>
+        <button class="hud-tab-btn" data-action="proofread" title="Corrector ortográfico y gramatical">✍️ Corrector</button>
       </div>
-      <button class="hud-close-btn" id="closeBtn" title="Cerrar (Esc)">&times;</button>
+      <div class="hud-header-actions">
+        <button class="hud-icon-btn" id="themeToggleBtn" title="Alternar Modo Claro / Oscuro">🌙</button>
+        <button class="hud-close-btn" id="closeBtn" title="Cerrar (Esc)">&times;</button>
+      </div>
     </div>
 
     <!-- Tone Selector (Visible en Traducir) -->

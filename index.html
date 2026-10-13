@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,9 +13,12 @@
       <div class="hub-brand">
         <span>⚡ AI Companion</span>
       </div>
-      <div class="hub-nav-tabs">
-        <button class="hub-nav-btn active" data-tab="history">📋 Historial</button>
-        <button class="hub-nav-btn" data-tab="settings">⚙️ Ajustes</button>
+      <div class="hub-nav-controls">
+        <div class="hub-nav-tabs">
+          <button class="hub-nav-btn active" data-tab="history">📋 Historial</button>
+          <button class="hub-nav-btn" data-tab="settings">⚙️ Ajustes</button>
+        </div>
+        <button class="hub-theme-btn" id="themeToggleBtn" title="Alternar Modo Claro / Oscuro">🌙</button>
       </div>
     </header>
 
@@ -30,7 +33,7 @@
       <section class="hub-pinned-section">
         <div class="hub-section-title">
           <span>Pines Frecuentes (📌)</span>
-          <span style="font-size:10.5px; color:#a5b4fc; font-weight:600;">Pegar en cualquier app con Alt+1, Alt+2, Alt+3, Alt+4</span>
+          <span style="font-size:10.5px; color:var(--accent-color); font-weight:600;">Pegar en cualquier app con Alt+1, Alt+2, Alt+3, Alt+4</span>
         </div>
         <div class="hub-pinned-grid" id="pinnedContainer">
           <!-- Pines renderizados dinámicamente -->
@@ -40,7 +43,7 @@
       <!-- Lista de Historial (20 slots) -->
       <div class="hub-section-title">
         <span>Últimos Copiados (Máx. 20)</span>
-        <button id="clearHistoryBtn" style="background:transparent; border:none; color:#ef4444; font-size:11px; cursor:pointer;">Limpiar</button>
+        <button id="clearHistoryBtn" style="background:transparent; border:none; color:var(--accent-red); font-size:11px; cursor:pointer;">Limpiar</button>
       </div>
       <div class="hub-history-list" id="historyContainer">
         <!-- Elementos del historial renderizados dinámicamente -->
@@ -53,7 +56,7 @@
         <!-- API Key -->
         <div class="hub-form-group">
           <label class="hub-form-label">Gemini API Key</label>
-          <div class="hub-form-desc">Obtén tu clave gratuita en <a href="https://aistudio.google.com/" target="_blank" style="color:#818cf8;">Google AI Studio</a>.</div>
+          <div class="hub-form-desc">Obtén tu clave gratuita en <a href="https://aistudio.google.com/" target="_blank" style="color:var(--accent-color);">Google AI Studio</a>.</div>
           <input type="password" class="hub-form-input" id="apiKeyInput" placeholder="AIzaSy...">
         </div>
 
@@ -68,7 +71,17 @@
             </select>
             <button class="hub-mini-btn" id="checkModelsBtn" style="padding:0 12px;">Comprobar</button>
           </div>
-          <div id="modelsStatus" style="font-size:11px; color:#9ca3af; display:none; margin-top:4px;"></div>
+          <div id="modelsStatus" style="font-size:11px; color:var(--text-muted); display:none; margin-top:4px;"></div>
+        </div>
+
+        <!-- Tema Visual -->
+        <div class="hub-form-group">
+          <label class="hub-form-label">Tema Visual</label>
+          <select class="hub-form-select" id="themeSelect">
+            <option value="dark">Modo Oscuro</option>
+            <option value="light">Modo Claro</option>
+            <option value="system">Sistema (Sigue a Windows)</option>
+          </select>
         </div>
 
         <!-- Tono por Defecto -->
@@ -107,7 +120,7 @@
 
         <!-- Guardar -->
         <button class="hub-save-btn" id="saveSettingsBtn">Guardar Ajustes</button>
-        <span id="saveStatus" style="font-size:12px; color:#10b981; display:none;">¡Ajustes guardados correctamente!</span>
+        <span id="saveStatus" style="font-size:12px; color:var(--accent-green); display:none;">¡Ajustes guardados correctamente!</span>
       </div>
     </section>
   </div>

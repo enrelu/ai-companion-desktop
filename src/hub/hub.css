@@ -1,11 +1,20 @@
 @import '../styles/glass.css';
 
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--bg-window) !important;
+  color: var(--text-main);
+}
+
 .hub-container {
   width: 100vw;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg-primary);
+  background: var(--bg-window);
   border-radius: 0;
   box-sizing: border-box;
 }
@@ -15,32 +24,39 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 20px;
-  background: rgba(20, 22, 28, 0.95);
+  padding: 12px 20px;
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .hub-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
-  color: #c7d2fe;
+  color: var(--accent-color);
+}
+
+.hub-nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .hub-nav-tabs {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .hub-nav-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -55,6 +71,22 @@
   background: var(--accent-color);
   color: #ffffff;
   font-weight: 600;
+}
+
+.hub-theme-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 5px 9px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hub-theme-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-main);
 }
 
 /* Tab Panels */
@@ -77,14 +109,15 @@
 
 .hub-search-input {
   width: 100%;
-  padding: 10px 14px;
+  padding: 9px 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-main);
-  font-size: 13.5px;
+  font-size: 13px;
   outline: none;
   transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .hub-search-input:focus {
@@ -98,8 +131,8 @@
 }
 
 .hub-section-title {
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
   color: var(--text-sub);
   letter-spacing: 0.5px;
@@ -115,8 +148,8 @@
 }
 
 .hub-pin-card {
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.25);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   padding: 8px 12px;
   cursor: pointer;
@@ -125,7 +158,7 @@
 }
 
 .hub-pin-card:hover {
-  background: rgba(99, 102, 241, 0.18);
+  background: var(--card-hover);
   border-color: var(--accent-color);
 }
 
@@ -134,7 +167,7 @@
   justify-content: space-between;
   font-size: 11px;
   font-weight: 600;
-  color: #a5b4fc;
+  color: var(--accent-color);
   margin-bottom: 4px;
 }
 
@@ -167,8 +200,8 @@
 }
 
 .hub-item-card:hover {
-  border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(48, 52, 68, 0.85);
+  border-color: var(--accent-color);
+  background: var(--card-hover);
 }
 
 .hub-item-header {
@@ -191,7 +224,7 @@
 }
 
 .hub-item-body {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-main);
   max-height: 60px;
   overflow: hidden;
@@ -207,7 +240,7 @@
 }
 
 .hub-mini-btn {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   color: var(--text-muted);
   font-size: 11px;
@@ -219,16 +252,16 @@
 
 .hub-mini-btn:hover {
   background: var(--accent-light);
-  color: #a5b4fc;
+  color: var(--accent-color);
   border-color: var(--accent-color);
 }
 
 /* Settings Form */
 .hub-settings-content {
-  max-width: 540px;
+  max-width: 560px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   overflow-y: auto;
   padding-bottom: 20px;
 }
@@ -246,7 +279,7 @@
 }
 
 .hub-form-desc {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
 }
 
@@ -258,6 +291,7 @@
   color: var(--text-main);
   font-size: 13px;
   outline: none;
+  box-sizing: border-box;
 }
 
 .hub-form-input:focus, .hub-form-select:focus {
@@ -269,16 +303,18 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12.5px;
+  color: var(--text-main);
 }
 
 .hub-save-btn {
   background: var(--accent-color);
   color: white;
   border: none;
-  padding: 10px 16px;
+  padding: 9px 18px;
   border-radius: var(--radius-sm);
   font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
   align-self: flex-start;
   transition: background 0.15s;
@@ -292,5 +328,5 @@
   text-align: center;
   color: var(--text-muted);
   padding: 40px 0;
-  font-size: 13.5px;
+  font-size: 13px;
 }

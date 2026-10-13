@@ -21,6 +21,7 @@ const copyBtn = document.getElementById('copyBtn') as HTMLButtonElement;
 const listenBtn = document.getElementById('listenBtn') as HTMLButtonElement;
 const explainBtn = document.getElementById('explainBtn') as HTMLButtonElement;
 const replaceBtn = document.getElementById('replaceBtn') as HTMLButtonElement;
+const themeToggleBtn = document.getElementById('themeToggleBtn') as HTMLButtonElement;
 const closeBtn = document.getElementById('closeBtn') as HTMLButtonElement;
 const tabButtons = document.querySelectorAll<HTMLButtonElement>('.hud-tab-btn');
 const tonePills = document.querySelectorAll<HTMLButtonElement>('.hud-tone-pill');
@@ -31,9 +32,31 @@ async function init() {
   currentTone = config.geminiTone;
   updateTonePillUI();
 
+  // Inicializar Tema
+  const resolved = ConfigService.applyTheme(config.theme);
+  updateThemeIcon(resolved);
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', async () => {
+      const currentResolved = document.documentElement.getAttribute('data-theme') || 'dark';
+      const newTheme = currentResolved === 'dark' ? 'light' : 'dark';
+      await ConfigService.updateConfig({ theme: newTheme });
+      ConfigService.applyTheme(newTheme);
+      updateThemeIcon(newTheme);
+    });
+  }
+
   // Escuchar evento de invocación desde Rust
   await listen<{ text: string }>('trigger-hud', (event) => {
     handleNewText(event.payload?.text || "");
+  });
+
+  // Escuchar sincronización de tema desde el Hub
+  await listen<{ theme: 'dark' | 'light' | 'system' }>('theme-changed', (event) => {
+    if (event.payload?.theme) {
+      const applied = ConfigService.applyTheme(event.payload.theme);
+      updateThemeIcon(applied);
+    }
   });
 
   // Eventos de tabs
@@ -193,10 +216,10 @@ async function executeCurrentAction() {
   }
 }
 
-// Renderizado interactivo para Smart Reply
+// Renderizado interactivo para Smart Reply (Compacto y sin márgenes excesivos)
 function renderSmartReply(rawOutput: string) {
-  const options = rawOutput.split(/Option \d+:/i).map(s => s.trim()).filter(Boolean);
-  if (options.length === 0) {
+  const rawOptions = rawOutput.split(/Option \d+:/i).map(s => s.trim()).filter(Boolean);
+  if (rawOptions.length === 0) {
     hudContent.textContent = rawOutput;
     return;
   }
@@ -204,12 +227,20 @@ function renderSmartReply(rawOutput: string) {
   hudContent.innerHTML = '';
   const labels = ['Opción 1: Positiva / Agradecer', 'Opción 2: Solicitar detalles / Pregunta', 'Opción 3: Alternativa / Declinar'];
 
-  options.forEach((optText, index) => {
+  const cleanedOptions = rawOptions.map(opt => {
+    return opt
+      .replace(/^[\s\r\n\-\*\•\d\.\)]+/g, '') // Eliminar viñetas o numeraciones
+      .replace(/^["'«“]|["'»”]$/g, '')        // Eliminar comillas envolventes
+      .replace(/\s+/g, ' ')                  // Colapsar saltos de línea internos en un solo espacio
+      .trim();
+  });
+
+  cleanedOptions.forEach((optText, index) => {
     const card = document.createElement('div');
     card.className = `hud-reply-card ${index === 0 ? 'selected' : ''}`;
     card.innerHTML = `
       <div class="hud-reply-label">${labels[index] || `Opción ${index + 1}`}</div>
-      <div class="hud-reply-text">${optText}</div>
+      <div class="hud-reply-text">${escapeHtml(optText)}</div>
     `;
 
     card.addEventListener('click', () => {
@@ -223,7 +254,7 @@ function renderSmartReply(rawOutput: string) {
   });
 
   // Seleccionar la primera opción por defecto
-  currentResult = options[0];
+  currentResult = cleanedOptions[0];
 }
 
 function setLoading(msg: string) {
@@ -288,6 +319,19 @@ function stopTTS() {
   isSpeaking = false;
   listenBtn.classList.remove('speaking');
   listenBtn.textContent = '🔊 Escuchar';
+}
+
+function updateThemeIcon(theme: 'dark' | 'light') {
+  if (themeToggleBtn) {
+    themeToggleBtn.textContent = theme === 'dark' ? '🌙' : '☀️';
+    themeToggleBtn.title = theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+  }
+}
+
+function escapeHtml(str: string): string {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 init();

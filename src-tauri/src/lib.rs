@@ -269,8 +269,11 @@ pub fn run() {
 
             let menu = Menu::with_items(app, &[&open_hud_i, &open_hub_i, &quit_i])?;
 
-            let _tray = TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone())
+            let mut tray_builder = TrayIconBuilder::new();
+            if let Some(icon) = app.default_window_icon() {
+                tray_builder = tray_builder.icon(icon.clone());
+            }
+            let _tray = tray_builder
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "open_hud" => {

@@ -6,6 +6,7 @@ export interface AppConfig {
   geminiApiKey: string;
   geminiModel: string;
   geminiTone: 'professional' | 'casual' | 'concise';
+  theme: 'dark' | 'light' | 'system';
   autoReplace: boolean;
   presentationMode: boolean; // Pausa las ventanas flotantes mientras se comparte pantalla
   pinnedItems: PinnedItem[];
@@ -29,6 +30,7 @@ const DEFAULT_CONFIG: AppConfig = {
   geminiApiKey: '',
   geminiModel: 'gemini-1.5-flash',
   geminiTone: 'professional',
+  theme: 'dark',
   autoReplace: false,
   presentationMode: false,
   pinnedItems: []
@@ -41,6 +43,7 @@ export const ConfigService = {
     const geminiApiKey = (await store.get<string>('geminiApiKey')) ?? DEFAULT_CONFIG.geminiApiKey;
     const geminiModel = (await store.get<string>('geminiModel')) ?? DEFAULT_CONFIG.geminiModel;
     const geminiTone = (await store.get<'professional' | 'casual' | 'concise'>('geminiTone')) ?? DEFAULT_CONFIG.geminiTone;
+    const theme = (await store.get<'dark' | 'light' | 'system'>('theme')) ?? DEFAULT_CONFIG.theme;
     const autoReplace = (await store.get<boolean>('autoReplace')) ?? DEFAULT_CONFIG.autoReplace;
     const presentationMode = (await store.get<boolean>('presentationMode')) ?? DEFAULT_CONFIG.presentationMode;
     const pinnedItems = (await store.get<PinnedItem[]>('pinnedItems')) ?? DEFAULT_CONFIG.pinnedItems;
@@ -49,10 +52,23 @@ export const ConfigService = {
       geminiApiKey,
       geminiModel,
       geminiTone,
+      theme,
       autoReplace,
       presentationMode,
       pinnedItems
     };
+  },
+
+  applyTheme(theme: 'dark' | 'light' | 'system'): 'dark' | 'light' {
+    let resolved: 'dark' | 'light' = 'dark';
+    if (theme === 'system') {
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } else {
+      resolved = theme;
+    }
+    document.documentElement.setAttribute('data-theme', resolved);
+    document.body.setAttribute('data-theme', resolved);
+    return resolved;
   },
 
   async updateConfig(partial: Partial<AppConfig>): Promise<void> {
