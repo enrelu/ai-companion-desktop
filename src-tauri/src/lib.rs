@@ -13,6 +13,14 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut,
 
 static LAST_ACTIVE_HWND: AtomicIsize = AtomicIsize::new(0);
 
+// Comando: Ocultar ventana flotante (HUD)
+#[tauri::command]
+fn hide_hud(app: tauri::AppHandle) {
+    if let Some(hud) = app.get_webview_window("hud") {
+        let _ = hud.hide();
+    }
+}
+
 // Comando: Copiar texto al portapapeles
 #[tauri::command]
 fn copy_to_clipboard(app: tauri::AppHandle, text: String) -> Result<(), String> {
@@ -24,18 +32,23 @@ fn copy_to_clipboard(app: tauri::AppHandle, text: String) -> Result<(), String> 
 // Comando: Auto-reemplazar texto en la aplicación activa
 #[tauri::command]
 fn replace_text_in_active_app(app: tauri::AppHandle, text: String) -> Result<(), String> {
-    // 1. Escribir texto al portapapeles
+    // 1. Ocultar la ventana flotante
+    if let Some(hud) = app.get_webview_window("hud") {
+        let _ = hud.hide();
+    }
+
+    // 2. Escribir texto al portapapeles
     app.clipboard()
         .write_text(text)
         .map_err(|e| e.to_string())?;
 
-    // 2. Restaurar el foco a la ventana que tenía el texto
+    // 3. Restaurar el foco a la ventana que tenía el texto
     let target_hwnd = LAST_ACTIVE_HWND.load(Ordering::SeqCst);
     if target_hwnd != 0 {
         win32::restore_active_window(target_hwnd);
     }
 
-    // 3. Pequeña espera para asegurar que la app receptora tiene el foco y simular Ctrl+V
+    // 4. Pequeña espera para asegurar que la app receptora tiene el foco y simular Ctrl+V
     thread::spawn(move || {
         thread::sleep(Duration::from_millis(60));
         win32::trigger_ctrl_v();
@@ -100,6 +113,17 @@ fn toggle_hub_window(app: &tauri::AppHandle) {
             let _ = main_window.show();
             let _ = main_window.set_focus();
         }
+    } else {
+        // Si la ventana no existe (fue cerrada), recrearla
+        let _ = tauri::WebviewWindowBuilder::new(
+            app,
+            "main",
+            tauri::WebviewUrl::App("index.html".into()),
+        )
+        .title("AI Companion - Hub")
+        .inner_size(660.0, 620.0)
+        .center()
+        .build();
     }
 }
 
@@ -131,10 +155,25 @@ pub fn run() {
         )
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            hide_hud,
             copy_to_clipboard,
             replace_text_in_active_app,
             get_cursor_pos
         ])
+        .on_window_event(|window, event| match event {
+            // Evitar que la ventana principal se destruya al pulsar X (ocultar a la bandeja)
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                let _ = window.hide();
+                api.prevent_close();
+            }
+            // Cuando la ventana HUD pierde el foco (clic fuera), cerrarla automáticamente
+            tauri::WindowEvent::Focused(false) => {
+                if window.label() == "hud" {
+                    let _ = window.hide();
+                }
+            }
+            _ => {}
+        })
         .setup(move |app| {
             // 1. Configurar System Tray
             let open_hud_i = MenuItem::with_id(app, "open_hud", "⚡ Asistente Flotante (Alt+T)", true, None::<&str>)?;
