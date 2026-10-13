@@ -70,6 +70,31 @@ npm run tauri dev
 
 ---
 
+## 📦 Ejecutable Autónomo (.exe)
+
+Ya hemos generado la versión empaquetada lista para producción:
+📍 **Ruta del ejecutable:** `src-tauri\target\release\ai-companion-desktop.exe` (~5.2 MB)
+
+Para volver a compilar el `.exe` optimizado en cualquier momento:
+```bash
+npm run build
+cd src-tauri
+cargo build --release
+```
+
+---
+
+## 🚀 Inicio Automático con Windows (Autostart)
+
+La aplicación incluye soporte nativo para arrancar automáticamente al encender el equipo:
+1. Abre el panel de **Ajustes** (`Alt + Shift + V`).
+2. Marca la casilla **"Iniciar con Windows"**.
+3. Pulsa **Guardar Ajustes**.
+
+La aplicación se registrará en el inicio de Windows y permanecerá discretamente en el System Tray lista para responder a los atajos en cualquier momento.
+
+---
+
 ## 🔑 Configuración
 
 1. Abre el panel de **Ajustes** en la aplicación (o desde el System Tray $\rightarrow$ *Historial y Ajustes*).
