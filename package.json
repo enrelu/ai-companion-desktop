@@ -2,6 +2,21 @@
   "name": "ai-companion-desktop",
   "private": true,
   "version": "0.1.0",
+  "description": "⚡ Ultralight native Windows AI companion powered by Google Gemini & Tauri 2.0. Global floating HUD (Alt+T) and smart clipboard manager.",
+  "keywords": [
+    "tauri",
+    "tauri-v2",
+    "gemini",
+    "google-gemini",
+    "ai-assistant",
+    "desktop-app",
+    "clipboard-manager",
+    "productivity",
+    "translator",
+    "windows",
+    "rust",
+    "typescript"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,9 +1,10 @@
 [package]
 name = "ai-companion-desktop"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "⚡ Ultralight native Windows AI companion powered by Google Gemini & Tauri 2.0"
+authors = ["enrelu"]
 edition = "2021"
+keywords = ["tauri", "gemini", "ai-assistant", "clipboard", "windows"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
