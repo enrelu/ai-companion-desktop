@@ -10,6 +10,7 @@ use tauri::{
 };
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_store::StoreExt;
 
 static LAST_ACTIVE_HWND: AtomicIsize = AtomicIsize::new(0);
 
@@ -63,6 +64,42 @@ fn get_cursor_pos() -> (i32, i32) {
     win32::get_mouse_position()
 }
 
+// Rutina para pegar directamente un Pin guardado (1, 2, 3 o 4) en cualquier aplicación
+fn paste_pin(app: &tauri::AppHandle, slot: u8) {
+    let app_handle = app.clone();
+    thread::spawn(move || {
+        if let Ok(store) = app_handle.store("settings.json") {
+            if let Some(pinned_val) = store.get("pinnedItems") {
+                if let Some(arr) = pinned_val.as_array() {
+                    for item in arr {
+                        if item.get("slot").and_then(|s| s.as_u64()) == Some(slot as u64) {
+                            if let Some(text) = item.get("text").and_then(|t| t.as_str()) {
+                                let text_to_paste = text.to_string();
+                                if !text_to_paste.is_empty() {
+                                    // Guardar la ventana activa actual
+                                    let active_hwnd = win32::get_active_window();
+
+                                    // Copiar el texto del pin al portapapeles
+                                    let _ = app_handle.clipboard().write_text(text_to_paste);
+                                    thread::sleep(Duration::from_millis(30));
+
+                                    // Asegurar foco y simular Ctrl+V
+                                    if active_hwnd != 0 {
+                                        win32::restore_active_window(active_hwnd);
+                                    }
+                                    thread::sleep(Duration::from_millis(30));
+                                    win32::trigger_ctrl_v();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 // Rutina para mostrar la ventana HUD en la posición del ratón con el texto seleccionado
 fn trigger_hud_flow(app: &tauri::AppHandle) {
     let app_handle = app.clone();
@@ -72,13 +109,13 @@ fn trigger_hud_flow(app: &tauri::AppHandle) {
         let active_hwnd = win32::get_active_window();
         LAST_ACTIVE_HWND.store(active_hwnd, Ordering::SeqCst);
 
-        // 2. Obtener el número de secuencia antes de copiar
+        // 2. Capturar el número de secuencia antes del copiado
         let initial_seq = win32::get_clipboard_sequence();
 
         // 3. Simular Ctrl+C en la ventana activa
         win32::trigger_ctrl_c();
 
-        // 4. Esperar hasta 240ms comprobando si el portapapeles cambió de secuencia (copia efectiva)
+        // 4. Esperar hasta 240ms comprobando si el portapapeles cambió (nueva copia efectiva)
         let mut new_copy_detected = false;
         for _ in 0..12 {
             thread::sleep(Duration::from_millis(20));
@@ -88,9 +125,9 @@ fn trigger_hud_flow(app: &tauri::AppHandle) {
             }
         }
 
-        // 5. Si el portapapeles CAMBIÓ, leer el nuevo texto seleccionado.
-        // Si NO cambió (porque no había texto seleccionado o la app no permitió copiar),
-        // ¡NO leer el portapapeles antiguo! Usar cadena vacía.
+        // 5. Si la secuencia del portapapeles CAMBIÓ, leer el texto recién copiado.
+        // Si NO cambió (porque no había texto seleccionado o la app no copió nada),
+        // ¡NO leer el portapapeles viejo! Usar cadena vacía.
         let captured_text = if new_copy_detected {
             app_handle
                 .clipboard()
@@ -110,7 +147,6 @@ fn trigger_hud_flow(app: &tauri::AppHandle) {
             let _ = hud_window.show();
             let _ = hud_window.set_focus();
 
-            // 8. Emitir evento con el texto para que la UI de TS lo procese
             let _ = hud_window.emit(
                 "trigger-hud",
                 serde_json::json!({
@@ -151,9 +187,19 @@ pub fn run() {
     let alt_v = Shortcut::new(Some(Modifiers::ALT), Code::KeyV);
     let alt_shift_v = Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::KeyV);
 
+    let alt_1 = Shortcut::new(Some(Modifiers::ALT), Code::Digit1);
+    let alt_2 = Shortcut::new(Some(Modifiers::ALT), Code::Digit2);
+    let alt_3 = Shortcut::new(Some(Modifiers::ALT), Code::Digit3);
+    let alt_4 = Shortcut::new(Some(Modifiers::ALT), Code::Digit4);
+
     let alt_t_clone = alt_t.clone();
     let alt_v_clone = alt_v.clone();
     let alt_shift_v_clone = alt_shift_v.clone();
+
+    let alt_1_clone = alt_1.clone();
+    let alt_2_clone = alt_2.clone();
+    let alt_3_clone = alt_3.clone();
+    let alt_4_clone = alt_4.clone();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::new().build())
@@ -168,6 +214,18 @@ pub fn run() {
                         } else if shortcut == &alt_shift_v_clone {
                             println!("[HotKey] Historial del Portapapeles activado");
                             toggle_hub_window(app);
+                        } else if shortcut == &alt_1_clone {
+                            println!("[HotKey] Pegando Pin #1");
+                            paste_pin(app, 1);
+                        } else if shortcut == &alt_2_clone {
+                            println!("[HotKey] Pegando Pin #2");
+                            paste_pin(app, 2);
+                        } else if shortcut == &alt_3_clone {
+                            println!("[HotKey] Pegando Pin #3");
+                            paste_pin(app, 3);
+                        } else if shortcut == &alt_4_clone {
+                            println!("[HotKey] Pegando Pin #4");
+                            paste_pin(app, 4);
                         }
                     }
                 })
@@ -219,11 +277,17 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // 2. Registrar atajos globales por defecto (Alt+T, Alt+V y Alt+Shift+V)
+            // 2. Registrar atajos globales por defecto
             let global_shortcut = app.global_shortcut();
             let _ = global_shortcut.register(alt_t);
             let _ = global_shortcut.register(alt_v);
             let _ = global_shortcut.register(alt_shift_v);
+
+            // Registrar atajos directos para pegar pines 1 a 4
+            let _ = global_shortcut.register(alt_1);
+            let _ = global_shortcut.register(alt_2);
+            let _ = global_shortcut.register(alt_3);
+            let _ = global_shortcut.register(alt_4);
 
             // 3. Monitor ligero en segundo plano para el historial de portapapeles (20 slots)
             let app_for_clip = app.handle().clone();

@@ -153,7 +153,7 @@ function renderPins(pins: PinnedItem[]) {
       card.innerHTML = `
         <div class="hub-pin-header">
           <span>📌 #${slot} ${pin.title}</span>
-          <span style="font-size:10px; opacity:0.7;">Atajo [${slot}]</span>
+          <span style="font-size:10.5px; font-weight:700; color:#818cf8; background:rgba(99,102,241,0.18); padding:1px 6px; border-radius:4px;">Alt+${slot}</span>
         </div>
         <div class="hub-pin-text">${escapeHtml(pin.text)}</div>
       `;
