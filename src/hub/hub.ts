@@ -3,7 +3,7 @@ import { listen, emit } from '@tauri-apps/api/event';
 import { enable as enableAutostart, isEnabled as isAutostartEnabled, disable as disableAutostart } from '@tauri-apps/plugin-autostart';
 import { ConfigService, HistoryItem, PinnedItem, ModelLimitInfo } from '../services/config';
 import { TextTransformers } from '../services/transformers';
-import { GeminiService } from '../services/gemini';
+import { GeminiService, isAllowedTextModel } from '../services/gemini';
 
 // Elementos DOM
 const navBtns = document.querySelectorAll<HTMLButtonElement>('.hub-nav-btn');
@@ -135,7 +135,14 @@ async function loadSettings() {
   autoReplaceCheck.checked = config.autoReplace;
   presentationModeCheck.checked = config.presentationMode;
 
-  currentAvailableModels = config.availableModels || [];
+  // Filtrar estrictamente cualquier modelo no deseado que haya quedado guardado en sesiones anteriores
+  const rawModels = config.availableModels || [];
+  currentAvailableModels = rawModels.filter(m => isAllowedTextModel(m));
+
+  // Si había modelos obsoletos o no de texto en el almacenamiento, limpiar la persistencia
+  if (currentAvailableModels.length !== rawModels.length) {
+    await ConfigService.updateConfig({ availableModels: currentAvailableModels });
+  }
 
   if (currentAvailableModels.length > 0) {
     renderModelOptions(currentAvailableModels, config.geminiModel);
@@ -226,7 +233,7 @@ async function checkModels() {
       });
 
       modelsStatus.style.color = '#10b981';
-      modelsStatus.textContent = `✅ ${models.length} modelos de texto listos. Modelo guardado entre sesiones.`;
+      modelsStatus.textContent = `✅ ${models.length} modelos de texto listos.`;
     } else {
       modelsStatus.style.color = '#ef4444';
       modelsStatus.textContent = 'No se encontraron modelos de texto compatibles para esta API Key.';

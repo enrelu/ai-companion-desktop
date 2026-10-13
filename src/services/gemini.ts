@@ -1,6 +1,30 @@
 import { ConfigService, ModelLimitInfo } from './config';
 import { Prompts, Tone } from './prompts';
 
+// Función para validar estrictamente que un modelo es de generación de texto puro y estable
+export function isAllowedTextModel(m: { id?: string; name?: string; displayName?: string; description?: string }): boolean {
+  const combined = `${m.id || ''} ${m.name || ''} ${m.displayName || ''} ${m.description || ''}`.toLowerCase();
+
+  // Debe pertenecer a la familia Gemini
+  if (!combined.includes('gemini')) return false;
+
+  // Excluir modelos de imágenes y nombres clave ("nano banana", "image", "imagen", etc.)
+  if (combined.includes('image') || combined.includes('imagen') || combined.includes('banana')) return false;
+  if (combined.includes('vision') && combined.includes('1.0')) return false;
+
+  // Excluir modelos preview (versiones no finales / experimentales de prueba)
+  if (combined.includes('preview')) return false;
+
+  // Excluir modelos de voz, TTS, Transcribe, Audio, Omni
+  if (combined.includes('tts') || combined.includes('audio') || combined.includes('transcribe') || combined.includes('speech') || combined.includes('omni')) return false;
+
+  // Excluir modelos de robótica, computer use, herramientas y embeddings
+  if (combined.includes('robotics') || combined.includes('computer-use') || combined.includes('computer use') || combined.includes('customtools')) return false;
+  if (combined.includes('tool') || combined.includes('embedding') || combined.includes('aqa') || combined.includes('learnlm')) return false;
+
+  return true;
+}
+
 export const GeminiService = {
   async executePrompt(promptText: string, modelOverride?: string): Promise<string> {
     const config = await ConfigService.getConfig();
@@ -101,25 +125,13 @@ export const GeminiService = {
     const data = await response.json();
     if (!data.models || !Array.isArray(data.models)) return [];
 
-    // Filtrar estrictamente modelos de generación de texto (excluir embeddings, imagen, visión antigua y experimentales no aptos)
+    // Filtrar estrictamente modelos de texto puros estables (excluyendo imagen, banana, preview, tts, audio, transcribe, robotics, computer-use)
     const textModels = data.models.filter((m: any) => {
-      const rawName = (m.name || '').toLowerCase();
       const methods: string[] = m.supportedGenerationMethods || [];
-
-      // Debe admitir generateContent
+      // 1. Debe admitir generateContent
       if (!methods.includes('generateContent')) return false;
-
-      // Debe pertenecer a la familia Gemini
-      if (!rawName.includes('gemini')) return false;
-
-      // Excluir modelos ajenos a la generación de texto
-      if (rawName.includes('embedding')) return false;
-      if (rawName.includes('imagen')) return false;
-      if (rawName.includes('vision') && rawName.includes('1.0')) return false;
-      if (rawName.includes('aqa')) return false;
-      if (rawName.includes('learnlm')) return false;
-
-      return true;
+      // 2. Comprobar que sea un modelo de texto permitido
+      return isAllowedTextModel(m);
     });
 
     const enriched: ModelLimitInfo[] = textModels.map((m: any) => {
@@ -145,7 +157,7 @@ export const GeminiService = {
         rpm = 15;
         rpd = 1500;
         tpm = 1000000;
-        isRecommended = lower === 'gemini-1.5-flash' || lower === 'gemini-2.0-flash';
+        isRecommended = !lower.includes('lite');
       }
 
       return {
@@ -161,19 +173,28 @@ export const GeminiService = {
       };
     });
 
-    // Ordenar modelos con prioridad a los más rápidos y recomendados
+    // Ordenar: primero los modelos Flash recomendados por versión, luego Lite, luego Pro
     enriched.sort((a, b) => {
-      const score = (item: ModelLimitInfo) => {
-        if (item.id === 'gemini-2.0-flash') return 100;
-        if (item.id === 'gemini-1.5-flash') return 90;
-        if (item.id === 'gemini-1.5-flash-8b') return 80;
-        if (item.id.includes('2.0-flash')) return 75;
-        if (item.id === 'gemini-1.5-pro') return 60;
-        if (item.id.includes('pro')) return 50;
-        if (item.id.includes('flash')) return 40;
-        return 10;
+      const getWeight = (id: string) => {
+        const lower = id.toLowerCase();
+        let base = 0;
+        if (lower.includes('flash') && !lower.includes('lite')) {
+          base = 300;
+        } else if (lower.includes('lite')) {
+          base = 200;
+        } else if (lower.includes('pro')) {
+          base = 100;
+        }
+
+        const versionMatch = lower.match(/(\d+(?:\.\d+)?)/);
+        if (versionMatch) {
+          base += parseFloat(versionMatch[1]) * 10;
+        } else if (lower.includes('latest')) {
+          base += 95;
+        }
+        return base;
       };
-      return score(b) - score(a);
+      return getWeight(b.id) - getWeight(a.id);
     });
 
     return enriched;
