@@ -135,9 +135,23 @@ fn trigger_hud_flow(app: &tauri::AppHandle) {
         // 6. Obtener la posición del ratón
         let (mouse_x, mouse_y) = win32::get_mouse_position();
 
-        // 7. Posicionar y mostrar la ventana flotante HUD
+        // 7. Posicionar y mostrar la ventana flotante HUD de forma adaptativa
         if let Some(hud_window) = app_handle.get_webview_window("hud") {
-            let _ = hud_window.set_position(PhysicalPosition::new(mouse_x + 10, mouse_y + 10));
+            let scale_factor = hud_window.scale_factor().unwrap_or(1.0);
+            let (win_w, win_h) = if let Ok(size) = hud_window.outer_size() {
+                if size.width > 0 && size.height > 0 {
+                    (size.width as i32, size.height as i32)
+                } else {
+                    ((570.0 * scale_factor) as i32, (360.0 * scale_factor) as i32)
+                }
+            } else {
+                ((570.0 * scale_factor) as i32, (360.0 * scale_factor) as i32)
+            };
+
+            let (target_x, target_y) =
+                win32::calculate_hud_position(mouse_x, mouse_y, win_w, win_h);
+
+            let _ = hud_window.set_position(PhysicalPosition::new(target_x, target_y));
             let _ = hud_window.unminimize();
             let _ = hud_window.show();
             let _ = hud_window.set_focus();
