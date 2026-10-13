@@ -24,3 +24,22 @@ dist-ssr
 *.sw?
 *.exe
 *.dll
+
+# Environment variables and credentials
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.cert
+*.pfx
+*.p12
+
+# Local configuration files
+settings.json
+*.local.json
+
+# OS files
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini

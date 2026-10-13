@@ -4,7 +4,7 @@
 fn main() {
     std::panic::set_hook(Box::new(|info| {
         let msg = format!("PANIC: {:#?}\n", info);
-        let _ = std::fs::write("C:/Scripts/Desarrollo/ai-companion-desktop/crash.log", msg);
+        let _ = std::fs::write("crash.log", msg);
     }));
     ai_companion_desktop_lib::run();
 }
