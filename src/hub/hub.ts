@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, emit } from '@tauri-apps/api/event';
 import { enable as enableAutostart, isEnabled as isAutostartEnabled, disable as disableAutostart } from '@tauri-apps/plugin-autostart';
-import { ConfigService, HistoryItem, PinnedItem } from '../services/config';
+import { ConfigService, HistoryItem, PinnedItem, ModelLimitInfo } from '../services/config';
 import { TextTransformers } from '../services/transformers';
 import { GeminiService } from '../services/gemini';
 
@@ -27,8 +27,10 @@ const saveSettingsBtn = document.getElementById('saveSettingsBtn') as HTMLButton
 const saveStatus = document.getElementById('saveStatus') as HTMLSpanElement;
 const checkModelsBtn = document.getElementById('checkModelsBtn') as HTMLButtonElement;
 const modelsStatus = document.getElementById('modelsStatus') as HTMLDivElement;
+const modelLimitsCard = document.getElementById('modelLimitsCard') as HTMLDivElement;
 
 let fullHistory: HistoryItem[] = [];
+let currentAvailableModels: ModelLimitInfo[] = [];
 
 async function init() {
   await loadSettings();
@@ -64,6 +66,11 @@ async function init() {
       const applied = ConfigService.applyTheme(event.payload.theme);
       updateThemeIcon(applied);
     }
+  });
+
+  // Escuchar cambio en el modelo seleccionado para actualizar límites en vivo
+  modelSelect.addEventListener('change', () => {
+    renderModelLimits(modelSelect.value);
   });
 
   // Cambio de pestañas
@@ -123,11 +130,25 @@ async function init() {
 async function loadSettings() {
   const config = await ConfigService.getConfig();
   apiKeyInput.value = config.geminiApiKey;
-  modelSelect.value = config.geminiModel;
   themeSelect.value = config.theme;
   toneSelect.value = config.geminiTone;
   autoReplaceCheck.checked = config.autoReplace;
   presentationModeCheck.checked = config.presentationMode;
+
+  currentAvailableModels = config.availableModels || [];
+
+  if (currentAvailableModels.length > 0) {
+    renderModelOptions(currentAvailableModels, config.geminiModel);
+  } else {
+    // Sin modelos comprobados aún -> Obligar a pulsar comprobar
+    modelSelect.innerHTML = '<option value="" disabled selected>⚠️ Pulsa "Comprobar" para cargar los modelos disponibles...</option>';
+    modelLimitsCard.style.display = 'none';
+    if (config.geminiApiKey) {
+      modelsStatus.style.display = 'block';
+      modelsStatus.style.color = 'var(--text-muted)';
+      modelsStatus.textContent = 'Pulsa "Comprobar" para cargar los modelos de generación de texto disponibles para tu cuenta.';
+    }
+  }
 
   try {
     autostartCheck.checked = await isAutostartEnabled();
@@ -137,9 +158,18 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
+  const selectedModel = modelSelect.value;
+  if (!selectedModel) {
+    modelsStatus.style.display = 'block';
+    modelsStatus.style.color = '#ef4444';
+    modelsStatus.textContent = '⚠️ Debes pulsar "Comprobar" y seleccionar un modelo de Gemini antes de guardar.';
+    return;
+  }
+
   await ConfigService.updateConfig({
     geminiApiKey: apiKeyInput.value.trim(),
-    geminiModel: modelSelect.value,
+    geminiModel: selectedModel,
+    availableModels: currentAvailableModels,
     theme: themeSelect.value as any,
     geminiTone: toneSelect.value as any,
     autoReplace: autoReplaceCheck.checked,
@@ -167,28 +197,124 @@ async function saveSettings() {
 }
 
 async function checkModels() {
+  const apiKey = apiKeyInput.value.trim();
+  if (!apiKey) {
+    modelsStatus.style.display = 'block';
+    modelsStatus.style.color = '#ef4444';
+    modelsStatus.textContent = '⚠️ Introduce tu Gemini API Key antes de comprobar.';
+    return;
+  }
+
+  checkModelsBtn.disabled = true;
+  checkModelsBtn.textContent = '⏳ Consultando...';
   modelsStatus.style.display = 'block';
-  modelsStatus.textContent = 'Consultando modelos disponibles en Google AI Studio...';
+  modelsStatus.style.color = 'var(--text-muted)';
+  modelsStatus.textContent = 'Conectando con Google AI Studio y filtrando modelos de texto...';
+
   try {
-    const models = await GeminiService.getAvailableModels(apiKeyInput.value.trim());
+    const models = await GeminiService.getAvailableModels(apiKey);
     if (models.length > 0) {
-      modelsStatus.textContent = `Modelos disponibles: ${models.join(', ')}`;
-      // Actualizar select si hay nuevos
-      const current = modelSelect.value;
-      modelSelect.innerHTML = '';
-      models.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = m;
-        if (m === current) opt.selected = true;
-        modelSelect.appendChild(opt);
+      currentAvailableModels = models;
+      const previousModel = modelSelect.value || (await ConfigService.getConfig()).geminiModel;
+      renderModelOptions(models, previousModel);
+
+      // Guardar automáticamente para no perder la configuración entre sesiones
+      await ConfigService.updateConfig({
+        geminiApiKey: apiKey,
+        geminiModel: modelSelect.value,
+        availableModels: models
       });
+
+      modelsStatus.style.color = '#10b981';
+      modelsStatus.textContent = `✅ ${models.length} modelos de texto listos. Modelo guardado entre sesiones.`;
     } else {
-      modelsStatus.textContent = 'No se encontraron modelos compatibles.';
+      modelsStatus.style.color = '#ef4444';
+      modelsStatus.textContent = 'No se encontraron modelos de texto compatibles para esta API Key.';
     }
   } catch (err: any) {
-    modelsStatus.textContent = `Error: ${err.message}`;
+    modelsStatus.style.color = '#ef4444';
+    modelsStatus.textContent = `❌ ${err.message}`;
+  } finally {
+    checkModelsBtn.disabled = false;
+    checkModelsBtn.textContent = '🔍 Comprobar';
   }
+}
+
+function renderModelOptions(models: ModelLimitInfo[], selectedModelId?: string) {
+  modelSelect.innerHTML = '';
+  let foundSelected = false;
+
+  models.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    const star = m.isRecommended ? ' ⭐ (Recomendado)' : '';
+    opt.textContent = `${m.displayName || m.id}${star} [${m.rpm} RPM / ${m.rpd} RPD]`;
+    if (selectedModelId && m.id === selectedModelId) {
+      opt.selected = true;
+      foundSelected = true;
+    }
+    modelSelect.appendChild(opt);
+  });
+
+  if (!foundSelected && models.length > 0) {
+    modelSelect.selectedIndex = 0;
+  }
+
+  renderModelLimits(modelSelect.value);
+}
+
+function renderModelLimits(modelId: string) {
+  const model = currentAvailableModels.find(m => m.id === modelId);
+  if (!model) {
+    modelLimitsCard.style.display = 'none';
+    return;
+  }
+
+  modelLimitsCard.style.display = 'flex';
+  const isPro = model.id.toLowerCase().includes('pro');
+  const isFlash = model.id.toLowerCase().includes('flash');
+
+  const inTokensStr = model.inputTokenLimit >= 1000000
+    ? `${(model.inputTokenLimit / 1000000).toFixed(1)}M`
+    : `${Math.round(model.inputTokenLimit / 1000)}k`;
+
+  const outTokensStr = `${Math.round(model.outputTokenLimit / 1000)}k`;
+
+  let note = '';
+  if (isPro) {
+    note = '⚠️ <strong>Modelo Pro:</strong> En el nivel gratuito (Free Tier) tiene un límite de <strong>2 RPM</strong> y <strong>50 peticiones/día</strong>. Para respuestas instantáneas y continuas se recomienda Flash.';
+  } else if (isFlash) {
+    note = '⚡ <strong>Modelo Flash (Recomendado):</strong> Máxima velocidad para atajos en tiempo real. <strong>15 RPM</strong> y hasta <strong>1.500 peticiones/día</strong> gratuitas.';
+  } else {
+    note = `💡 Modelo de texto con <strong>${model.rpm} RPM</strong> y <strong>${model.rpd} peticiones/día</strong>.`;
+  }
+
+  modelLimitsCard.innerHTML = `
+    <div class="hub-limits-header">
+      <span class="hub-limits-title">⚡ ${escapeHtml(model.displayName || model.id)}</span>
+      <span class="hub-limits-tier-badge">Límites Free Tier</span>
+    </div>
+    <div class="hub-limits-grid">
+      <div class="hub-limit-stat">
+        <div class="hub-limit-stat-val">${model.rpm} <span style="font-size:10px; font-weight:normal;">RPM</span></div>
+        <div class="hub-limit-stat-lbl">Peticiones / Min</div>
+      </div>
+      <div class="hub-limit-stat">
+        <div class="hub-limit-stat-val">${model.rpd.toLocaleString()} <span style="font-size:10px; font-weight:normal;">RPD</span></div>
+        <div class="hub-limit-stat-lbl">Peticiones / Día</div>
+      </div>
+      <div class="hub-limit-stat">
+        <div class="hub-limit-stat-val">${inTokensStr} <span style="font-size:10px; font-weight:normal;">tokens</span></div>
+        <div class="hub-limit-stat-lbl">Contexto Entrada</div>
+      </div>
+    </div>
+    <div class="hub-limits-details">
+      <div>${note}</div>
+      <div style="margin-top:5px; font-size:10.5px; opacity:0.85;">
+        Salida máx: ${outTokensStr} tokens • TPM: ${(model.tpm / 1000).toLocaleString()}k tokens/min. <em>(En cuentas Pay-as-you-go no aplica el límite de 1.500 RPD).</em>
+      </div>
+    </div>
+  `;
 }
 
 async function loadHistoryAndPins() {

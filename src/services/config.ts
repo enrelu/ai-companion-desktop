@@ -2,9 +2,22 @@
 import { LazyStore } from '@tauri-apps/plugin-store';
 import { ContentType, TextTransformers } from './transformers';
 
+export interface ModelLimitInfo {
+  id: string;
+  displayName: string;
+  rpm: number;
+  rpd: number;
+  tpm: number;
+  inputTokenLimit: number;
+  outputTokenLimit: number;
+  description?: string;
+  isRecommended?: boolean;
+}
+
 export interface AppConfig {
   geminiApiKey: string;
   geminiModel: string;
+  availableModels: ModelLimitInfo[];
   geminiTone: 'professional' | 'casual' | 'concise';
   theme: 'dark' | 'light' | 'system';
   autoReplace: boolean;
@@ -28,7 +41,8 @@ export interface HistoryItem {
 
 const DEFAULT_CONFIG: AppConfig = {
   geminiApiKey: '',
-  geminiModel: 'gemini-1.5-flash',
+  geminiModel: '',
+  availableModels: [],
   geminiTone: 'professional',
   theme: 'dark',
   autoReplace: false,
@@ -42,6 +56,7 @@ export const ConfigService = {
   async getConfig(): Promise<AppConfig> {
     const geminiApiKey = (await store.get<string>('geminiApiKey')) ?? DEFAULT_CONFIG.geminiApiKey;
     const geminiModel = (await store.get<string>('geminiModel')) ?? DEFAULT_CONFIG.geminiModel;
+    const availableModels = (await store.get<ModelLimitInfo[]>('availableModels')) ?? DEFAULT_CONFIG.availableModels;
     const geminiTone = (await store.get<'professional' | 'casual' | 'concise'>('geminiTone')) ?? DEFAULT_CONFIG.geminiTone;
     const theme = (await store.get<'dark' | 'light' | 'system'>('theme')) ?? DEFAULT_CONFIG.theme;
     const autoReplace = (await store.get<boolean>('autoReplace')) ?? DEFAULT_CONFIG.autoReplace;
@@ -51,6 +66,7 @@ export const ConfigService = {
     return {
       geminiApiKey,
       geminiModel,
+      availableModels,
       geminiTone,
       theme,
       autoReplace,
