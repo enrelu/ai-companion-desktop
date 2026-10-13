@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { enable as enableAutostart, isEnabled as isAutostartEnabled, disable as disableAutostart } from '@tauri-apps/plugin-autostart';
 import { ConfigService, HistoryItem, PinnedItem } from '../services/config';
 import { TextTransformers } from '../services/transformers';
 import { GeminiService } from '../services/gemini';
@@ -19,6 +20,7 @@ const modelSelect = document.getElementById('modelSelect') as HTMLSelectElement;
 const toneSelect = document.getElementById('toneSelect') as HTMLSelectElement;
 const autoReplaceCheck = document.getElementById('autoReplaceCheck') as HTMLInputElement;
 const presentationModeCheck = document.getElementById('presentationModeCheck') as HTMLInputElement;
+const autostartCheck = document.getElementById('autostartCheck') as HTMLInputElement;
 const saveSettingsBtn = document.getElementById('saveSettingsBtn') as HTMLButtonElement;
 const saveStatus = document.getElementById('saveStatus') as HTMLSpanElement;
 const checkModelsBtn = document.getElementById('checkModelsBtn') as HTMLButtonElement;
@@ -91,6 +93,12 @@ async function loadSettings() {
   toneSelect.value = config.geminiTone;
   autoReplaceCheck.checked = config.autoReplace;
   presentationModeCheck.checked = config.presentationMode;
+
+  try {
+    autostartCheck.checked = await isAutostartEnabled();
+  } catch (e) {
+    console.warn("Autostart check failed:", e);
+  }
 }
 
 async function saveSettings() {
@@ -101,6 +109,16 @@ async function saveSettings() {
     autoReplace: autoReplaceCheck.checked,
     presentationMode: presentationModeCheck.checked
   });
+
+  try {
+    if (autostartCheck.checked) {
+      await enableAutostart();
+    } else {
+      await disableAutostart();
+    }
+  } catch (e) {
+    console.warn("Autostart toggle failed:", e);
+  }
 
   saveStatus.style.display = 'inline';
   setTimeout(() => {

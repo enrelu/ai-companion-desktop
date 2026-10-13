@@ -25,9 +25,7 @@ fn hide_hud(app: tauri::AppHandle) {
 // Comando: Copiar texto al portapapeles
 #[tauri::command]
 fn copy_to_clipboard(app: tauri::AppHandle, text: String) -> Result<(), String> {
-    app.clipboard()
-        .write_text(text)
-        .map_err(|e| e.to_string())
+    app.clipboard().write_text(text).map_err(|e| e.to_string())
 }
 
 // Comando: Auto-reemplazar texto en la aplicación activa
@@ -129,10 +127,7 @@ fn trigger_hud_flow(app: &tauri::AppHandle) {
         // Si NO cambió (porque no había texto seleccionado o la app no copió nada),
         // ¡NO leer el portapapeles viejo! Usar cadena vacía.
         let captured_text = if new_copy_detected {
-            app_handle
-                .clipboard()
-                .read_text()
-                .unwrap_or_default()
+            app_handle.clipboard().read_text().unwrap_or_default()
         } else {
             String::new()
         };
@@ -160,7 +155,8 @@ fn trigger_hud_flow(app: &tauri::AppHandle) {
 // Rutina para alternar la visibilidad de la ventana principal (Hub)
 fn toggle_hub_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
-        if main_window.is_visible().unwrap_or(false) && !main_window.is_minimized().unwrap_or(false) {
+        if main_window.is_visible().unwrap_or(false) && !main_window.is_minimized().unwrap_or(false)
+        {
             let _ = main_window.hide();
         } else {
             let _ = main_window.unminimize();
@@ -202,6 +198,7 @@ pub fn run() {
     let alt_4_clone = alt_4.clone();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(
@@ -254,8 +251,20 @@ pub fn run() {
         })
         .setup(move |app| {
             // 1. Configurar System Tray
-            let open_hud_i = MenuItem::with_id(app, "open_hud", "⚡ Asistente Flotante (Alt+T o Alt+V)", true, None::<&str>)?;
-            let open_hub_i = MenuItem::with_id(app, "open_hub", "📋 Historial y Ajustes (Alt+Shift+V)", true, None::<&str>)?;
+            let open_hud_i = MenuItem::with_id(
+                app,
+                "open_hud",
+                "⚡ Asistente Flotante (Alt+T o Alt+V)",
+                true,
+                None::<&str>,
+            )?;
+            let open_hub_i = MenuItem::with_id(
+                app,
+                "open_hub",
+                "📋 Historial y Ajustes (Alt+Shift+V)",
+                true,
+                None::<&str>,
+            )?;
             let quit_i = MenuItem::with_id(app, "quit", "Salir", true, None::<&str>)?;
 
             let menu = Menu::with_items(app, &[&open_hud_i, &open_hub_i, &quit_i])?;

@@ -40,7 +40,9 @@ pub fn get_active_window() -> isize {
 
 pub fn restore_active_window(hwnd: isize) {
     if hwnd != 0 {
-        unsafe { SetForegroundWindow(hwnd); }
+        unsafe {
+            SetForegroundWindow(hwnd);
+        }
     }
 }
 
