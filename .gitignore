@@ -24,6 +24,7 @@ dist-ssr
 *.sw?
 *.exe
 *.dll
+*.zip
 
 # Environment variables and credentials
 .env

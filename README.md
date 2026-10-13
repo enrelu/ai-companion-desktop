@@ -6,6 +6,18 @@ Evolución y bifurcación oficial de la extensión de Chrome **AITranslator**.
 
 ---
 
+## 📦 Descarga Rápida (Versión Portable para Windows)
+
+No necesitas instalar Node ni Rust, ni compilar código para utilizar la aplicación:
+
+1. Ve a la sección de **[Releases](https://github.com/enrelu/ai-companion-desktop/releases/latest)** o descarga directamente la última versión compilada:
+   - 📥 **[Descargar ai-companion-desktop-v0.1.0-windows-portable.zip](https://github.com/enrelu/ai-companion-desktop/releases/download/v0.1.0/ai-companion-desktop-v0.1.0-windows-portable.zip)** (~2.3 MB)
+2. Descomprime el archivo `.zip` en cualquier carpeta de tu PC o en un pendrive USB.
+3. Haz doble clic en **`ai-companion-desktop.exe`**.
+4. ¡Listo! La app se ejecutará de inmediato en el System Tray ocupando apenas ~27 MB de RAM, lista para responder a tus atajos globales (`Alt+T` / `Alt+V` y `Alt+Shift+V`).
+
+---
+
 ## ✨ Características Principales
 
 ### 1. Ventana Flotante Contextual (Floating HUD — `Alt+T`)
@@ -97,7 +109,7 @@ La aplicación se registrará en el inicio de Windows y permanecerá discretamen
 
 ## 🔑 Configuración
 
-1. Abre el panel de **Ajustes** en la aplicación (o desde el System Tray $\rightarrow$ *Historial y Ajustes*).
+1. Abre el panel de **Ajustes** en la aplicación (o desde el System Tray $\rightarrow$ *Historial y Ajustes* o con `Alt + Shift + V`).
 2. Pega tu API Key gratuita de [Google AI Studio](https://aistudio.google.com/).
-3. Selecciona tu modelo favorito (`gemini-1.5-flash`, `gemini-2.0-flash` o `gemini-1.5-pro`).
+3. Haz clic en **"🔍 Comprobar"** para cargar los modelos de generación de texto disponibles y elige tu preferido (ej. `gemini-3.8-flash` o `gemini-2.5-flash`).
 4. Haz clic en **Guardar Ajustes**.
