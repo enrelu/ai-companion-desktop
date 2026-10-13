@@ -1,0 +1,296 @@
+@import '../styles/glass.css';
+
+.hub-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+/* Nav Header */
+.hub-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: rgba(20, 22, 28, 0.95);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.hub-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #c7d2fe;
+}
+
+.hub-nav-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.hub-nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hub-nav-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-main);
+}
+
+.hub-nav-btn.active {
+  background: var(--accent-color);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Tab Panels */
+.hub-panel {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px;
+}
+
+.hub-panel.active {
+  display: flex;
+}
+
+/* Search Bar */
+.hub-search-wrapper {
+  margin-bottom: 14px;
+}
+
+.hub-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.hub-search-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+/* Pinned Items Section */
+.hub-pinned-section {
+  margin-bottom: 14px;
+}
+
+.hub-section-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-sub);
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.hub-pinned-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.hub-pin-card {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.hub-pin-card:hover {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: var(--accent-color);
+}
+
+.hub-pin-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a5b4fc;
+  margin-bottom: 4px;
+}
+
+.hub-pin-text {
+  font-size: 12px;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* History List (20 slots) */
+.hub-history-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hub-item-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.15s;
+}
+
+.hub-item-card:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(48, 52, 68, 0.85);
+}
+
+.hub-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hub-item-badge {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hub-item-time {
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.hub-item-body {
+  font-size: 13px;
+  color: var(--text-main);
+  max-height: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.hub-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.hub-mini-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hub-mini-btn:hover {
+  background: var(--accent-light);
+  color: #a5b4fc;
+  border-color: var(--accent-color);
+}
+
+/* Settings Form */
+.hub-settings-content {
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+.hub-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hub-form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.hub-form-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.hub-form-input, .hub-form-select {
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-size: 13px;
+  outline: none;
+}
+
+.hub-form-input:focus, .hub-form-select:focus {
+  border-color: var(--accent-color);
+}
+
+.hub-form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.hub-save-btn {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.15s;
+}
+
+.hub-save-btn:hover {
+  background: var(--accent-hover);
+}
+
+.hub-empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 0;
+  font-size: 13.5px;
+}

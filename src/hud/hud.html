@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Floating HUD</title>
+  <link rel="stylesheet" href="./hud.css">
+</head>
+<body>
+  <div class="glass-panel hud-container fade-in" id="hudWindow">
+    <!-- Header -->
+    <div class="hud-header">
+      <div class="hud-title-badge">⚡ AI Companion</div>
+      <div class="hud-tabs" id="hudTabs">
+        <button class="hud-tab-btn active" data-action="translate">🌐 Traducir</button>
+        <button class="hud-tab-btn" data-action="makeNative">🇬🇧 Make Native</button>
+        <button class="hud-tab-btn" data-action="smartReply">💬 Smart Reply</button>
+        <button class="hud-tab-btn" data-action="code">🐞 Código/Error</button>
+        <button class="hud-tab-btn" data-action="summarize">📝 TL;DR</button>
+        <button class="hud-tab-btn" data-action="proofread">✍️ Corrector</button>
+      </div>
+      <button class="hud-close-btn" id="closeBtn" title="Cerrar (Esc)">&times;</button>
+    </div>
+
+    <!-- Tone Selector (Visible en Traducir) -->
+    <div class="hud-tones-row" id="tonesRow">
+      <span class="hud-tone-label">Tono:</span>
+      <button class="hud-tone-pill active" data-tone="professional">Profesional</button>
+      <button class="hud-tone-pill" data-tone="casual">Casual</button>
+      <button class="hud-tone-pill" data-tone="concise">Conciso</button>
+    </div>
+
+    <!-- Content Area -->
+    <div class="hud-content" id="hudContent">
+      <div class="hud-loading pulsing">Esperando texto seleccionado...</div>
+    </div>
+
+    <!-- Actions Row -->
+    <div class="hud-actions-row">
+      <div class="hud-action-group">
+        <button class="hud-action-btn" id="copyBtn" title="Copiar al portapapeles">📋 Copiar</button>
+        <button class="hud-action-btn" id="listenBtn" title="Escuchar pronunciación">🔊 Escuchar</button>
+        <button class="hud-action-btn" id="explainBtn" title="Explicar contexto">💡 Explicar</button>
+      </div>
+      <div class="hud-action-group">
+        <button class="hud-action-btn primary" id="replaceBtn" title="Reemplazar texto en la aplicación activa">🔄 Reemplazar</button>
+      </div>
+    </div>
+
+    <!-- Footer Stats -->
+    <div class="hud-footer">
+      <span id="textStats">0 palabras • 0 caracteres</span>
+      <span id="statusIndicator">Listo</span>
+    </div>
+  </div>
+
+  <script type="module" src="./hud.ts"></script>
+</body>
+</html>
